@@ -11,9 +11,10 @@ endif()
 find_package(Boost REQUIRED)
 
 # Specify include directories.
-include_directories( ${BERRY_SOURCE_DIR}/include )
+include_directories( include )
 
 # Compile berry as a shared library and link.
 add_library( berry SHARED
+    src/process.cpp
 )
 target_link_libraries( berry boost_system boost_filesystem )
