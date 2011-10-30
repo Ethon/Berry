@@ -1,10 +1,12 @@
 /**
  * @file system.hpp
- * @author Florian Erler aka Ethon <ethon [a-t] ethon.cc>
+ * @author Florian Erler aka Ethon (ethon [a-t] ethon.cc)
  * @date 2011
+ * @version 1.0a
  * @brief Collects info about the target cpu and os.
  * 
  * This file is a part of of Berry.
+ * 
  * Berry is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
