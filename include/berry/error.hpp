@@ -31,8 +31,8 @@
 namespace berry
 {  
    /**
-    * @brief Base exception class for berry.
-    **/
+   * @brief Base exception class for berry.
+   **/
    class error : public std::runtime_error
    {
    public:
@@ -61,6 +61,17 @@ namespace berry
       {
          return m_error_code;
       }
+   };
+   
+   /**
+    * @brief Exception which will be thrown if a 
+    **/
+   struct unexpected_error : public error
+   {
+   public:
+      inline unexpected_error(std::string const& msg)
+         : error(msg)
+      { }
    };
 }
 

@@ -26,6 +26,7 @@
 #include <array>
 #include <algorithm>
 #include <type_traits>
+#include <vector>
 
 // Boost Library:
 #include <boost/filesystem.hpp>
@@ -36,6 +37,8 @@
 #ifdef BERRY_LINUX
 #  include <unistd.h>
 #  include <elf.h>
+#  include <sys/types.h>
+#  include <signal.h>
 #endif
 
 // Berry:
@@ -68,9 +71,11 @@ static bool has_procfs_mounted()
    return true;
 }
 
+
 #ifdef BERRY_LINUX
 // Performs readlink.
-static boost::filesystem::path extract_link(boost::filesystem::path link)
+static boost::filesystem::path extract_link(
+   boost::filesystem::path  const& link)
 {
    size_t const buffer_size = 1024;
    std::array<char, buffer_size> buffer;
@@ -87,15 +92,11 @@ static boost::filesystem::path extract_link(boost::filesystem::path link)
 #endif
 
 berry::process::process()
-  : m_pid(0), m_name()
+  : m_pid(0)
 { }
 
 berry::process::process(berry::process::pid_type pid)
-  : m_pid(pid), m_name()
-{ }
-
-berry::process::process(berry::process_entry const& entry)
-  : m_pid(entry.pid), m_name(&entry.command[0])
+  : m_pid(pid)
 { }
 
 berry::process::pid_type berry::process::get_pid() const
@@ -103,13 +104,21 @@ berry::process::pid_type berry::process::get_pid() const
   return m_pid;
 }
 
-std::string const& berry::process::get_name() const
+std::string berry::get_name(berry::process proc)
 {
-  if(m_name.empty()) m_name = get_process_name(m_pid);
-  return m_name;
+   std::string result;
+   
+#ifdef BERRY_LINUX
+   boost::filesystem::ifstream comm(
+      berry::unix_like::get_procfs_dir(proc) / "comm");
+   std::getline(result, comm);
+#endif
+
+   return result;
 }
 
-bool berry::still_exists(berry::process const& proc)
+
+bool berry::still_exists(berry::process proc)
 {
    if(proc.get_pid() == berry::get_current_process().get_pid())
       return true;
@@ -120,52 +129,43 @@ bool berry::still_exists(berry::process const& proc)
 }
 
 boost::filesystem::path
-   berry::unix_like::get_procfs_dir(berry::process const& proc)
+   berry::unix_like::get_procfs_dir(berry::process proc)
 {
-   if(!berry::detail::process::impl::has_procfs_mounted())
-      return boost::filesystem::path();
+   static bool const mounted = has_procfs_mounted();
+   if(!mounted) return boost::filesystem::path();
    
-   return boost::filesystem::path(
-      berry::detail::process::impl::get_procfs_root() /
+   return boost::filesystem::path(get_procfs_root() /
       boost::lexical_cast<std::string>(proc.get_pid()));
 }
 
-boost::filesystem::path berry::get_working_dir(berry::process const& proc)
+boost::filesystem::path berry::get_working_dir(berry::process proc)
 {
 #ifdef BERRY_LINUX
    return extract_link(berry::unix_like::get_procfs_dir(proc) / "cwd");
 #endif
 }
     
-boost::filesystem::path berry::get_executable_path(berry::process const& proc)
+boost::filesystem::path berry::get_executable_path(berry::process proc)
 {
 #ifdef BERRY_LINUX
    return extract_link(berry::unix_like::get_procfs_dir(proc) / "exe");
 #endif
 }
 
-int berry::get_bitness(berry::process const& proc)
+int berry::get_bitness(berry::process proc)
 {
 #ifdef BERRY_LINUX
-   try
-   {
-      // Open the process' executable and read the elf ident.
-      boost::filesystem::ifstream exe(get_executable_path(proc));
-      if(!exe)
-         throw 
-      
-      std::array<char, EI_NIDENT> ident;
-      exe.read(&ident[0], ident.size());
-   }
-   catch(berry::system_error const& e)
-   {
-      
-   }
+   // Open the process' executable and read the elf ident.
+   boost::filesystem::ifstream exe(get_executable_path(proc));
+   if(!exe)
+      throw berry::error("Could not get bitness of exe file: Not readable");
+   std::array<char, EI_NIDENT> ident;
+   exe.read(&ident[0], ident.size());
    
    // Assert if it's a valid elf file.
    static std::array<char, 4> const elf_magic = { 0x7F, 'E', 'L', 'F'};
    if(!std::equal(elf_magic.begin(), elf_magic.end(), ident.begin()))
-      return 0;
+      throw berry::error("Could not get bitness of exe file: No valid ELF");
    
    // Return the bitness of the elf class field.
    switch(ident[EI_CLASS])
@@ -177,25 +177,35 @@ int berry::get_bitness(berry::process const& proc)
       return 64;
    
    default:
-      return 0;
+      throw berry::error("Could not get bitness of exe file: No valid class");
    }
 #endif
 }
-    
-  /**
-  * @brief Returns the currently active process calling this function.
-  *
-  * @return :process& The current process.
-  **/
-  process const& get_current_process();
-    
-  /**
-  * @brief Creates a new process which runs as the current process' child.
-  *
-  * @param arguments The arguments to the process where the command to run
-  * is passed as the first argument.
-  * @return :process The created child process.
-  **/
-  berry::process create_process(std::vector<std::string> const& arguments);
+
+berry::process berry::get_current_process()
+{
+#ifdef BERRY_LINUX
+   static berry::process const current_process(getpid());
+#endif
+   
+   return current_process;
+}
+
+berry::process berry::create_process(std::vector<std::string> const& arguments)
+{
+   return berry::get_current_process();
+}
   
-  void kill_process(process const& proc);
+void berry::terminate_process(berry::process proc)
+{
+#ifdef BERRY_LINUX
+   if(proc.get_pid() == 0)
+      return;
+   
+   if(kill(proc.get_pid(), SIGTERM) == -1)
+   {
+      int error_code = errno;
+      throw berry::system_error("kill() failed", error_code);
+   } 
+#endif
+}
