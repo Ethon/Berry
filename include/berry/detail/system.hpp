@@ -25,14 +25,14 @@
 #define __BERRY_DETAIL_SYSTEM_HPP__ 1
 
 // Determine operating system.
-#if defined linux || defined __linux__
+#if defined __linux__
 #   define BERRY_VALID_OS 1
 #   define BERRY_LINUX 1
 #   define BERRY_OS_STRING "Linux"
 #endif
 
 // Determine CPU.
-#if defined __i386__ || defined i386 || defined _M_IX86
+#if defined __i386__ || defined _M_IX86 || defined __x86_64__ || defined _M_X64
 #   define BERRY_VALID_CPU 1
 #   define BERRY_X86 1
 #   if defined __x86_64__  || defined _M_X64

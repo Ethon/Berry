@@ -25,8 +25,8 @@
 #include <string>
 #include <array>
 #include <algorithm>
-#include <type_traits>
 #include <vector>
+#include <cassert>
 
 // Boost Library:
 #include <boost/filesystem.hpp>
@@ -34,6 +34,7 @@
 #include <boost/lexical_cast.hpp>
 
 // System:
+#include <berry/detail/system.hpp>
 #ifdef BERRY_LINUX
 #  include <unistd.h>
 #  include <elf.h>
@@ -44,7 +45,6 @@
 // Berry:
 #include <berry/process.hpp>
 #include <berry/process_entry.hpp>
-#include <berry/detail/system.hpp>
 #include <berry/error.hpp>
 
 // Returns the procfs root directory.
@@ -70,7 +70,6 @@ static bool has_procfs_mounted()
    
    return true;
 }
-
 
 #ifdef BERRY_LINUX
 // Performs readlink.
@@ -111,12 +110,11 @@ std::string berry::get_name(berry::process proc)
 #ifdef BERRY_LINUX
    boost::filesystem::ifstream comm(
       berry::unix_like::get_procfs_dir(proc) / "comm");
-   std::getline(result, comm);
+   std::getline(comm, result);
 #endif
 
    return result;
 }
-
 
 bool berry::still_exists(berry::process proc)
 {
@@ -191,12 +189,38 @@ berry::process berry::get_current_process()
    return current_process;
 }
 
-berry::process berry::create_process(std::vector<std::string> const& arguments)
+berry::process berry::simple_create_process(
+   std::vector<std::string> const& arguments)
 {
-   return berry::get_current_process();
+   assert(arguments.size() > 0);
+   
+#ifdef BERRY_LINUX
+   berry::process::pid_type result = fork();
+   if(result == -1)
+   {
+      int error_code = errno;
+      throw berry::system_error("fork() failed", error_code);
+   }
+   else if(result == 0)
+   {
+      std::vector<char*> args;
+      args.reserve(arguments.size() + 1);
+      for(std::string const& cur : arguments)
+         args.push_back(const_cast<char*>(cur.c_str()));
+      args.push_back(nullptr);
+      execvp(arguments[0].c_str(), &args[0]);
+      
+      // Exit in case exec failed.
+      _exit(-1);
+   }
+   else
+   {
+      return berry::process(result);
+   }
+#endif
 }
   
-void berry::terminate_process(berry::process proc)
+void berry::terminate_process(berry::process proc, int exit_code)
 {
 #ifdef BERRY_LINUX
    if(proc.get_pid() == 0)
