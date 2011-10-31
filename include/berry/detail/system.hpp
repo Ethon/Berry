@@ -31,6 +31,11 @@
 #   define BERRY_OS_STRING "Linux"
 #endif
 
+#if defined _WIN32
+#  define BERRY_WINDOWS 1
+#  define BERRY_OS_STRING "Windows"
+#endif
+
 // Determine CPU.
 #if defined __i386__ || defined _M_IX86 || defined __x86_64__ || defined _M_X64
 #   define BERRY_VALID_CPU 1

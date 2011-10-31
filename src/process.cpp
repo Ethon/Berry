@@ -40,6 +40,8 @@
 #  include <elf.h>
 #  include <sys/types.h>
 #  include <signal.h>
+#elif defined BERRY_WINDOWS
+#  include <Windows.h>
 #endif
 
 // Berry:
@@ -74,11 +76,11 @@ static bool has_procfs_mounted()
 #ifdef BERRY_LINUX
 // Performs readlink.
 static boost::filesystem::path extract_link(
-   boost::filesystem::path  const& link)
+   boost::filesystem::path const& link)
 {
    size_t const buffer_size = 1024;
    std::array<char, buffer_size> buffer;
-   ssize_t result = readlink(link.c_str(), buffer.data(), buffer.size() - 1);
+   ssize_t result = readlink(link.c_str(), buffer.data(), buffer.size());
    if(result == -1)
    {
       int error_code = errno;
@@ -111,6 +113,10 @@ std::string berry::get_name(berry::process proc)
    boost::filesystem::ifstream comm(
       berry::unix_like::get_procfs_dir(proc) / "comm");
    std::getline(comm, result);
+
+#elif defined BERRY_WINDOWS
+   return berry::get_executable_path(proc).filename().string();
+   
 #endif
 
    return result;
@@ -123,6 +129,27 @@ bool berry::still_exists(berry::process proc)
    
 #ifdef BERRY_LINUX
    return boost::filesystem::exists(berry::unix_like::get_procfs_dir(proc));
+   
+#elif BERRY_WINDOWS
+   // Open a handle to the process.
+   HANDLE target = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION,
+      false, proc.get_pid());
+   if(!target)
+   {
+      int error_code = GetLastError();
+      throw berry::system_error("OpenProcess() failed", error_code);
+   }
+   
+   // Try to fetch the process' exit code.
+   DWORD exit_code;
+   if(!GetExitCodeProcess(target, &exit_code))
+   {
+      CloseHandle(target);
+      return false;
+   }
+   
+   CloseHandle(target);
+   return exit_code == STILL_ACTIVE;
 #endif
 }
 
@@ -147,6 +174,29 @@ boost::filesystem::path berry::get_executable_path(berry::process proc)
 {
 #ifdef BERRY_LINUX
    return extract_link(berry::unix_like::get_procfs_dir(proc) / "exe");
+   
+#elif BERRY_WINDOWS
+   // Open a handle to the process.
+   HANDLE target = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION,
+      false, proc.get_pid());
+   if(!target)
+   {
+      int error_code = GetLastError();
+      throw berry::system_error("OpenProcess() failed", error_code);
+   }
+   
+   // Query it's process image path.
+   std::array<char, 512> buffer;
+   if(!QueryFullProcessImageNameA(target, 0, &buffer[0], buffer.size()))
+   {
+      int error_code = GetLastError();
+      CloseHandle(target);
+      throw berry::system_error("QueryFullProcessImageNameA() failed",
+         error_code);
+   }
+   
+   CloseHandle(target);
+   return boost::filesystem::path(&buffer[0]);
 #endif
 }
 
@@ -177,6 +227,36 @@ int berry::get_bitness(berry::process proc)
    default:
       throw berry::error("Could not get bitness of exe file: No valid class");
    }
+   
+#elif defined BERRY_WINDOWS
+   // First check if we are on a 64bit Windows, else its always 32bit.
+   if(!GetSystemWow64Directory(nullptr, 0))
+   {
+      if(GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
+         return 32;
+   }
+   
+   // Open a handle to the process.
+   HANDLE target = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION,
+      false, proc.get_pid());
+   if(!target)
+   {
+      int error_code = GetLastError();
+      throw berry::system_error("OpenProcess() failed", error_code);
+   }
+   
+   // Check the Wow64 state.
+   BOOL is_wow64;
+   if(!IsWow64Process(target, &is_wow64);
+   {
+      int error_code = GetLastError();
+      CloseHandle(target);
+      throw berry::system_error("IsWow64Process() failed", error_code);
+   }
+   CloseHandle(target);
+   
+   // If the process is running under Wow64, it's 32bit for sure.
+   return is_wow64 ? 32 : 64;
 #endif
 }
 
@@ -184,6 +264,9 @@ berry::process berry::get_current_process()
 {
 #ifdef BERRY_LINUX
    static berry::process const current_process(getpid());
+   
+#elif defined BERRY_WINDOWS
+   static berry::process const current_process(GetCurrentProcessId());
 #endif
    
    return current_process;
@@ -195,6 +278,7 @@ berry::process berry::simple_create_process(
    assert(arguments.size() > 0);
    
 #ifdef BERRY_LINUX
+   // Fork.
    berry::process::pid_type result = fork();
    if(result == -1)
    {
@@ -203,6 +287,7 @@ berry::process berry::simple_create_process(
    }
    else if(result == 0)
    {
+      // Create a new array of raw pointers and execvp.
       std::vector<char*> args;
       args.reserve(arguments.size() + 1);
       for(std::string const& cur : arguments)
@@ -217,19 +302,83 @@ berry::process berry::simple_create_process(
    {
       return berry::process(result);
    }
+
+#elif BERRY_WINDOWS
+   // Initialize data.
+    PROCESS_INFORMATION process_information;
+    STARTUPINFO startup_info;
+    memset(&process_information, 0, sizeof(process_information));
+    memset(&startup_info, 0, sizeof(startup_info));
+    startup_info.cb = sizeof(startup_info);
+    
+   // Construct the command line.
+   std::vector<char> cmd_line;
+   
+   // First set the application's name.
+   cmd_line.push_back('"');
+   cmd_line.append(arguments[0].begin, arguments[0].end());
+   cmd_line.push_back('"');
+   
+   // Append arguments.
+   for(std::string const& cur : arguments)
+   {
+      cmd_line.push_back(' ');
+      cmd_line.push_back('"');
+      cmd_line.append(cur.begin, cur.end());
+      cmd_line.push_back('"');
+   }
+   
+   // Create the process with that commandline.
+   BOOL result = CreateProcessA( nullptr,
+                                 &cmd_line[0],
+                                 nullptr,
+                                 nullptr,
+                                 false,
+                                 0,
+                                 nullptr,
+                                 nullptr,
+                                 &startup_info,
+                                 &process_information);
+   if(!result)
+   {
+      int error_code = GetLastError();
+      throw berry::system_error("CreateProcess() failed", error_code);
+   }
+   
+   CloseHandle(process_information.hProcess);
+   CloseHandle(process_information.hThread);                            
+   return berry::process(process_information.dwProcessId);
 #endif
 }
-  
+
 void berry::terminate_process(berry::process proc, int exit_code)
 {
-#ifdef BERRY_LINUX
    if(proc.get_pid() == 0)
       return;
-   
+      
+#ifdef BERRY_LINUX   
    if(kill(proc.get_pid(), SIGTERM) == -1)
    {
       int error_code = errno;
       throw berry::system_error("kill() failed", error_code);
-   } 
+   }
+   
+#elif defined BERRY_WINDOWS
+   // Open a handle to the process.
+   HANDLE target = OpenProcess(PROCESS_TERMINATE, false, proc.get_pid());
+   if(!target)
+   {
+      int error_code = GetLastError();
+      throw berry::system_error("OpenProcess() failed", error_code);
+   }
+   
+   // Terminate that process.
+   if(!TerminateProcess(target, exit_code))
+   {
+      int error_code = GetLastError();
+      CloseHandle(target);
+      throw berry::system_error("TerminateProcess() failed", error_code);
+   }
+   CloseHandle(target);
 #endif
 }

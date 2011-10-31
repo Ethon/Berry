@@ -29,16 +29,21 @@
 
 namespace berry
 {
-  namespace detail
-  {
+   namespace detail
+   {
       namespace process
       {
 #ifdef BERRY_LINUX
-        typedef int pid_type;
-        unsigned int const max_comm_len = 16;
+         typedef int pid_type;
+         unsigned int const max_comm_len = 16;
+#endif
+        
+#ifdef BERRY_WINDOWS
+         typedef unsigned long pid_type;
+         unsigned int const max_comm_len = 255;
 #endif
       }
-  }
+   }
 }
 
 #endif // __BERRY_DETAIL_PROCESSDETAIL_HPP__
