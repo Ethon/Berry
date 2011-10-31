@@ -30,6 +30,7 @@ include_directories( include )
 
 # Compile berry as a shared library and link.
 add_library( berry SHARED
-    src/process.cpp
+   src/process.cpp
+   src/process_entry.cpp
 )
 target_link_libraries( berry boost_system boost_filesystem )

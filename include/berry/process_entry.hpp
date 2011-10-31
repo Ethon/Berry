@@ -25,19 +25,55 @@
 #define __BERRY_PROCESSENTRY_HPP__ 1
 
 // C++ Standard Library:
-#include <array>
+#include <string>
+#include <memory>
+
+// Boost Library:
+#include <boost/optional.hpp>
 
 // Berry:
 #include <berry/detail/process_detail.hpp>
 
 namespace berry
 {
-  struct process_entry
-  {
-    detail::process::pid_type pid;
-    detail::process::pid_type parent_pid;
-    std::array<char, detail::process::max_comm_len + 1> command;
-  };
+   /**
+    * @brief Class representing a process entry on the system.
+    **/
+   struct process_entry
+   {
+      detail::process::pid_type pid;
+      detail::process::pid_type parent_pid;
+      std::string command;
+   };
+  
+   /**
+    * @brief Type used to store snapshots of processes.
+    **/
+   typedef std::shared_ptr<void> process_snapshot_type;
+  
+   /**
+    * @brief Creates a snapshot of all running processes on the system.
+    *
+    * @return process_snapshot_type The created snapshot.
+    **/
+   process_snapshot_type create_process_snapshot();
+   
+   /**
+    * @brief Extracts the first process entry from the snapshot.
+    *
+    * @param snap The snapshot to extract from.
+    * @return :process_entry The first process.
+    **/
+   process_entry extract_first_process(process_snapshot_type& snap);
+   
+   /**
+    * @brief Extracts the next process entry from the snapshot.
+    *
+    * @param snap The snapshot to extract from.
+    * @return :optional< berry::process_entry > The next process 
+    **/
+   boost::optional<process_entry> extract_next_process(
+      process_snapshot_type& snap);
 }
 
 #endif // __BERRY_PROCESSENTRY_HPP__

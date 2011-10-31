@@ -34,7 +34,6 @@
 
 // Berry:
 #include <berry/detail/process_detail.hpp>
-#include <berry/process_entry.hpp>
 
 namespace berry
 {

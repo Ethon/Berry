@@ -64,7 +64,7 @@ namespace berry
    };
    
    /**
-    * @brief Exception which will be thrown if a 
+    * @brief Exception which will be thrown if an unexpected error occurrs.
     **/
    struct unexpected_error : public error
    {
