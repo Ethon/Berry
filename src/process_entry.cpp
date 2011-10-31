@@ -33,6 +33,9 @@
 #include <berry/detail/system.hpp>
 #ifdef BERRY_LINUX
 #  include <glob.h>
+#elif defined BERRY_WINDOWS
+#  include <Windows.h>
+#  include <Tlhelp32.h>
 #endif
 
 // Berry:
@@ -88,26 +91,58 @@ berry::process_snapshot_type berry::create_process_snapshot()
 {
 #ifdef BERRY_LINUX
    return berry::process_snapshot_type(new snapshot(), &destroy_snapshot);
+   
+#elif defined BERRY_WINDOWS
+   HANDLE snap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+   if(snap == INVALID_HANDLE_VALUE)
+   {
+      int error = GetLastError();
+      throw berry::system_error("CreateToolhelp32Snapshot() failed", error);
+   }
+   return berry::process_snapshot_type(snap, &CloseHandle);
 #endif
 }
    
 berry::process_entry
    berry::extract_first_process(berry::process_snapshot_type& snap)
 {
+#ifdef BERRY_LINUX
    snapshot* ss = static_cast<snapshot*>(snap.get());
    boost::filesystem::path dir(ss->data.gl_pathv[ss->data_ptr++]);
    return make_entry_from_path(dir);
+   
+#elif defined BERRY_WINDOWS
+   PROCESSENTRY32A entry;
+   entry.dwSize = sizeof(entry);
+   if(!Process32FirstA(snap, &entry))
+   {
+      int error = GetLastError();
+      throw berry::system_error("Process32FirstA() failed", error);
+   }
+   return { entry.th32ProcessID, entry.th32ParentProcessID, entry.szExeFile };
+#endif
 }
    
 boost::optional<berry::process_entry> berry::extract_next_process(
    berry::process_snapshot_type& snap)
 {
+#ifdef BERRY_LINUX
    snapshot* ss = static_cast<snapshot*>(snap.get());
    if(ss->data_ptr < ss->data.gl_pathc)
    {
       boost::filesystem::path dir(ss->data.gl_pathv[ss->data_ptr++]);
       return boost::optional<berry::process_entry>(make_entry_from_path(dir));
    }
+   
+#elif defined BERRY_WINDOWS
+   PROCESSENTRY32A entry;
+   entry.dwSize = sizeof(entry);
+   if(Process32NextA(snap, &entry))
+   {
+      return boost::optional<berry::process_entry>(
+         { entry.th32ProcessID, entry.th32ParentProcessID, entry.szExeFile });
+   }
+#endif
    
    return boost::optional<berry::process_entry>();
 }
