@@ -275,20 +275,24 @@ berry::process berry::simple_create_process(
       int error_code = errno;
       throw berry::system_error("fork() failed", error_code);
    }
-   else if(result == 0)
+   else if(result == 0) // We are the child now.
    {
-      // Create a new array of raw pointers and execvp.
+      // Create a new array of raw pointers.
       std::vector<char*> args;
       args.reserve(arguments.size() + 1);
+      
+      // Copy pointers of the string storages and terminate with a nullptr.
       for(std::string const& cur : arguments)
          args.push_back(const_cast<char*>(cur.c_str()));
       args.push_back(nullptr);
+      
+      // Call execvp to change the process image.
       execvp(arguments[0].c_str(), &args[0]);
       
-      // Exit in case exec failed.
+      // Exit in the case execvp failed.
       _exit(-1);
    }
-   else
+   else // We are still the parent.
    {
       return berry::process(result);
    }
@@ -304,18 +308,17 @@ berry::process berry::simple_create_process(
    // Construct the command line.
    std::vector<char> cmd_line;
    
-   // First set the application's name.
-   cmd_line.push_back('"');
-   cmd_line.append(arguments[0].begin, arguments[0].end());
-   cmd_line.push_back('"');
-   
    // Append arguments.
+   bool first = true;
    for(std::string const& cur : arguments)
    {
-      cmd_line.push_back(' ');
+      if(!first)
+         cmd_line.push_back(' ');
+      
       cmd_line.push_back('"');
-      cmd_line.append(cur.begin, cur.end());
+      cmd_line.append(cur.begin(), cur.end());
       cmd_line.push_back('"');
+      first = false;
    }
    
    // Create the process with that commandline.
