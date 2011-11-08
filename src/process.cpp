@@ -135,21 +135,10 @@ bool berry::still_exists(berry::process proc)
    HANDLE target = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION,
       false, proc.get_pid());
    if(!target)
-   {
-      int error_code = GetLastError();
-      throw berry::system_error("OpenProcess() failed", error_code);
-   }
-   
-   // Try to fetch the process' exit code.
-   DWORD exit_code;
-   if(!GetExitCodeProcess(target, &exit_code))
-   {
-      CloseHandle(target);
       return false;
-   }
    
    CloseHandle(target);
-   return exit_code == STILL_ACTIVE;
+   return true;
 #endif
 }
 
@@ -356,7 +345,8 @@ void berry::terminate_process(berry::process proc, int exit_code)
    if(proc.get_pid() == 0)
       return;
       
-#ifdef BERRY_LINUX   
+#ifdef BERRY_LINUX
+   // Send a sigterm to the process.
    if(kill(proc.get_pid(), SIGTERM) == -1)
    {
       int error_code = errno;
