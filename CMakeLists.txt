@@ -34,3 +34,11 @@ add_library( berry SHARED
    src/process_entry.cpp
 )
 target_link_libraries( berry boost_system boost_filesystem )
+
+# Compile tests.
+add_executable( test_processes test/test_processes.cpp )
+target_link_libraries( test_processes berry boost_system boost_filesystem boost_unit_test_framework)
+
+# Install.
+install( TARGETS berry DESTINATION lib )
+install( FILES include/* DESTINATION include )
