@@ -32,6 +32,7 @@ include_directories( include )
 add_library( berry SHARED
    src/process.cpp
    src/process_entry.cpp
+   src/process_iterator.cpp
 )
 target_link_libraries( berry boost_system boost_filesystem )
 
