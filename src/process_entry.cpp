@@ -79,7 +79,7 @@ static berry::process_entry make_entry_from_path(boost::filesystem::path& dir)
    berry::process_entry result;
    (stat >> result.pid).ignore(
       std::numeric_limits<std::streamsize>::max(), '(');
-   std::getline(stat, result.command, ')');
+   std::getline(stat, result.name, ')');
    char dummy; stat >> dummy >> result.parent_pid;
    
    return result;
@@ -144,5 +144,63 @@ boost::optional<berry::process_entry> berry::extract_next_process(
    }
 #endif
    
+   return boost::optional<berry::process_entry>();
+}
+
+boost::optional<berry::process_entry> berry::get_entry_by_pid(
+   berry::detail::process::pid_type pid)
+{
+   // Iterate all processes.
+   auto snapshot = berry::create_process_snapshot();
+   boost::optional<berry::process_entry> entry =
+      berry::extract_first_process(snapshot);
+   do
+   {
+      // Check if we have a match.
+      if(entry->pid == pid)
+         return entry;
+   }
+   while( (entry = berry::extract_next_process(snapshot)) );
+   
+   // We have no match.
+   return boost::optional<berry::process_entry>();
+}
+   
+boost::optional<berry::process_entry> berry::get_entry_by_name(
+   std::string name, bool case_sensitive)
+{
+#ifdef BERRY_LINUX
+   // Adjust name length if we're on a system which limits this.
+   if(name.length() >= berry::detail::process::max_comm_len)
+      name.resize(berry::detail::process::max_comm_len - 1);
+#endif
+      
+   // Convert to lower case if we don't compare case sensitive.
+   if(!case_sensitive)
+      std::transform(name.begin(), name.end(), name.begin(), &tolower);
+   
+   // Iterate all processes.
+   auto snapshot = berry::create_process_snapshot();
+   boost::optional<berry::process_entry> entry =
+      berry::extract_first_process(snapshot);
+   do
+   {
+      // Convert to lower case if we don't compare case sensitive.
+      if(!case_sensitive)
+         std::transform(entry->name.begin(), entry->name.end(),
+            entry->name.begin(), &tolower);
+
+      // Check if we have a match.
+      if(name == entry->name)
+      {
+         // Restore case before returning if we converted to lower case.
+         if(!case_sensitive)
+            entry->name = berry::get_name(berry::process(entry->pid));
+         return entry;
+      }
+   }
+   while( (entry = berry::extract_next_process(snapshot)) );
+   
+   // We have no match.
    return boost::optional<berry::process_entry>();
 }

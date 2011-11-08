@@ -43,7 +43,7 @@ namespace berry
    {
       detail::process::pid_type pid;
       detail::process::pid_type parent_pid;
-      std::string command;
+      std::string name;
    };
   
    /**
@@ -70,10 +70,31 @@ namespace berry
     * @brief Extracts the next process entry from the snapshot.
     *
     * @param snap The snapshot to extract from.
-    * @return :optional< berry::process_entry > The next process 
+    * @return :optional< berry::process_entry > The next process .
     **/
    boost::optional<process_entry> extract_next_process(
       process_snapshot_type& snap);
+   
+   /**
+    * @brief Retrieves a process entry by its identifier.
+    *
+    * @param pid The pid to look for.
+    * @return :optional< berry::process_entry > The matching entry.
+    **/
+   boost::optional<process_entry> get_entry_by_pid(
+      detail::process::pid_type pid);
+   
+   /**
+    * @brief Retrieves a process entry by its name.
+    * Many systems limit this to a few characters, so this function may yield
+    * false results on those systems. Use get_executable_path to be sure to
+    * determine the full name.
+    * @param name The name to look for.
+    * @param case_sensitive Decide if the search is case sensitive or not.
+    * @return :optional< berry::process_entry > The matching entry.
+    **/
+   boost::optional<process_entry> get_entry_by_name(std::string name,
+      bool case_sensitive = true);
 }
 
 #endif // __BERRY_PROCESSENTRY_HPP__
