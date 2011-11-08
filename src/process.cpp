@@ -46,7 +46,6 @@
 
 // Berry:
 #include <berry/process.hpp>
-#include <berry/process_entry.hpp>
 #include <berry/error.hpp>
 
 // Returns the procfs root directory.
@@ -55,6 +54,7 @@ static boost::filesystem::path const& get_procfs_root()
 #ifdef BERRY_LINUX
    // We simply assume that it is default mounted.
    static boost::filesystem::path root("/proc");
+   
 #else
    // Else we assume there is no procfs.
    static boost::filesystem::path root();
@@ -106,20 +106,18 @@ berry::process::pid_type berry::process::get_pid() const
 }
 
 std::string berry::get_name(berry::process proc)
-{
-   std::string result;
-   
+{  
 #ifdef BERRY_LINUX
+   std::string result;
    boost::filesystem::ifstream comm(
       berry::unix_like::get_procfs_dir(proc) / "comm");
    std::getline(comm, result);
+   return result;
 
 #elif defined BERRY_WINDOWS
    return berry::get_executable_path(proc).filename().string();
    
 #endif
-
-   return result;
 }
 
 bool berry::still_exists(berry::process proc)
@@ -156,6 +154,9 @@ boost::filesystem::path berry::get_working_dir(berry::process proc)
 {
 #ifdef BERRY_LINUX
    return extract_link(berry::unix_like::get_procfs_dir(proc) / "cwd");
+
+#else
+   return boost::filesystem::path();
 #endif
 }
     
@@ -175,12 +176,12 @@ boost::filesystem::path berry::get_executable_path(berry::process proc)
    }
    
    // Query it's process image path.
-   std::array<char, 512> buffer;
-   if(!QueryFullProcessImageNameA(target, 0, &buffer[0], buffer.size()))
+   std::array<wchar_t, MAX_PATH> buffer;
+   if(!QueryFullProcessImageNameW(target, 0, &buffer[0], buffer.size()))
    {
       int error_code = GetLastError();
       CloseHandle(target);
-      throw berry::system_error("QueryFullProcessImageNameA() failed",
+      throw berry::system_error("QueryFullProcessImageNameW() failed",
          error_code);
    }
    
