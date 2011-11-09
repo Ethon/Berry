@@ -40,6 +40,7 @@
 #  include <elf.h>
 #  include <sys/types.h>
 #  include <signal.h>
+#  include <wait.h>
 #elif defined BERRY_WINDOWS
 #  include <Windows.h>
 #endif
@@ -89,6 +90,47 @@ static boost::filesystem::path extract_link(
    
    return boost::filesystem::path(
       std::string(buffer.begin(), buffer.begin() + result));
+}
+
+// Signal handler to wait for terminated child processes so we have no zombies.
+static void sigfunc(int sig)
+{
+   // Ignore everything except SIG_CHLD. (Redundant code?)
+   if(sig != SIGCHLD)
+      return;
+   
+   // Call wait to retrieve the child's status, but don't block.
+   // The only error-checking done here is to catch invalid paramters.
+   int status;
+   errno = 0;
+   waitpid(-1, &status, WNOHANG);
+   assert(errno != EINVAL);
+}
+
+// Installs a signal handler for child process related signals.
+static void install_sigchld_handler()
+{
+   // Set our signal handler.
+   __sighandler_t last_handler= signal(SIGCHLD, &sigfunc);
+   
+   // Check if we got an error.
+   if(last_handler == SIG_ERR)
+   {
+      int error_code = errno;
+      throw berry::system_error("signal() failed", error_code);
+   }
+   
+   // If the last signal handler wasn't set to ignore/default, our handler
+   // probably would break code. Reinstall the old signal handler so we don't
+   // mess with user code.
+   if(last_handler == SIG_DFL || last_handler == SIG_IGN)
+   {
+      if(signal(SIGCHLD, last_handler) == SIG_ERR)
+      {
+         int error_code = errno;
+         throw berry::system_error("signal() failed", error_code);
+      }
+   }
 }
 #endif
 
@@ -268,6 +310,15 @@ berry::process berry::simple_create_process(
    assert(arguments.size() > 0);
    
 #ifdef BERRY_LINUX
+   // We may have to install a SIG_CHLD handler to avoid the new child
+   // becoming a zombie.
+   static bool signal_handler_installed = false;
+   if(!signal_handler_installed)
+   {
+      install_sigchld_handler();
+      signal_handler_installed = true;
+   }
+   
    // Fork.
    berry::process::pid_type result = fork();
    if(result == -1)
