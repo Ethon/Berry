@@ -111,7 +111,7 @@ static void sigfunc(int sig)
 static void install_sigchld_handler()
 {
    // Set our signal handler.
-   __sighandler_t last_handler= signal(SIGCHLD, &sigfunc);
+   __sighandler_t last_handler = signal(SIGCHLD, &sigfunc);
    
    // Check if we got an error.
    if(last_handler == SIG_ERR)
@@ -123,7 +123,7 @@ static void install_sigchld_handler()
    // If the last signal handler wasn't set to ignore/default, our handler
    // probably would break code. Reinstall the old signal handler so we don't
    // mess with user code.
-   if(last_handler == SIG_DFL || last_handler == SIG_IGN)
+   if(last_handler != SIG_DFL && last_handler != SIG_IGN)
    {
       if(signal(SIGCHLD, last_handler) == SIG_ERR)
       {
