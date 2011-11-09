@@ -403,7 +403,7 @@ void berry::terminate_process(berry::process proc, int exit_code)
       
 #ifdef BERRY_LINUX
    // Send a sigterm to the process.
-   if(kill(proc.get_pid(), SIGTERM) == -1)
+   if(kill(proc.get_pid(), SIGKILL) == -1)
    {
       int error_code = errno;
       throw berry::system_error("kill() failed", error_code);
