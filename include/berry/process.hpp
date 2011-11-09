@@ -138,7 +138,8 @@ namespace berry
     
    /**
    * @brief Creates a new process which runs as the current process' child.
-   *
+   * One some systems (like Linux) this is an asynchronous action, so don't
+   * expect the new process to be running right after this function returns.
    * @param arguments The arguments to the process where the command to run
    * is passed as the first argument.
    * @return :process The created child process.
