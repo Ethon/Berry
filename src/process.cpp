@@ -307,7 +307,8 @@ berry::process berry::get_current_process()
 berry::process berry::simple_create_process(
    std::vector<std::string> const& arguments)
 {
-   assert(arguments.size() > 0);
+   if(arguments.empty())
+      throw berry::argument_error("No process name/path passed");
    
 #ifdef BERRY_LINUX
    // We may have to install a SIG_CHLD handler to avoid the new child
