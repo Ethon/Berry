@@ -73,6 +73,17 @@ namespace berry
          : error(msg)
       { }
    };
+   
+   /**
+    * @brief Exception which will be thrown if an invalid argument was passed.
+    **/
+   struct argument_error : public error
+   {
+   public:
+      inline argument_error(std::string const& msg)
+         : error(msg)
+      { }
+   };
 }
 
 #endif // __BERRY_ERROR_HPP__
