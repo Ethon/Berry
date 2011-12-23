@@ -19,7 +19,7 @@ project(berry)
 
 # Set appropiate flags. A C++11 compiler is required.
 if(CMAKE_COMPILER_IS_GNUCXX)
-  set(CMAKE_CXX_FLAGS "-std=c++0x -Wall -Wextra -pedantic")
+  set(CMAKE_CXX_FLAGS "-std=c++0x -Wall -Wextra -Weffc++ -pedantic")
   set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g")
   set(CMAKE_CXX_FLAGS_RELEASE "-O3 -s")
 endif()
