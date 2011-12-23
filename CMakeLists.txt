@@ -14,13 +14,18 @@
 # along with Berry. If not, see <http://www.gnu.org/licenses/>.
 
 # Set up project
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 2.6)
 project(berry)
 
 # Set appropiate flags. A C++11 compiler is required.
 if(CMAKE_COMPILER_IS_GNUCXX)
-  set(CMAKE_CXX_FLAGS "-std=c++0x")
+  set(CMAKE_CXX_FLAGS "-std=c++0x -Wall -Wextra -pedantic")
+  set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g")
+  set(CMAKE_CXX_FLAGS_RELEASE "-O3 -s")
 endif()
+
+# Define options.
+option(COMPILE_TESTS "Turn on to compile tests" OFF)
 
 # Boost is required to build Berry.
 find_package(Boost REQUIRED)
@@ -28,18 +33,33 @@ find_package(Boost REQUIRED)
 # Specify include directories.
 include_directories( include )
 
-# Compile berry as a shared library and link.
+# Compile berry as a shared library.
+file(GLOB BERRY_SOURCE_FILES src/*.cpp)
 add_library( berry SHARED
-   src/process.cpp
-   src/process_entry.cpp
-   src/process_iterator.cpp
+  ${BERRY_SOURCE_FILES}
 )
-target_link_libraries( berry boost_system boost_filesystem )
 
-# Compile tests.
-add_executable( test_processes test/test_processes.cpp )
-target_link_libraries( test_processes berry boost_system boost_filesystem boost_unit_test_framework)
+# Link libraries.
+target_link_libraries( berry
+  boost_system
+  boost_filesystem
+)
+
+# Compile tests if wanted.
+if(COMPILE_TESTS)
+  add_executable(test_processes
+    test/test_processes.cpp
+  )
+
+  target_link_libraries( test_processes
+    berry
+    boost_system
+    boost_filesystem
+    boost_unit_test_framework
+  )
+endif(COMPILE_TESTS)
 
 # Install.
-install( TARGETS berry DESTINATION lib )
-install( FILES include/* DESTINATION include )
+file(GLOB_RECURSE BERRY_HEADER_FILES include/*.hpp)
+install(TARGETS berry DESTINATION lib)
+install(FILES ${BERRY_HEADER_FILES} DESTINATION include)
