@@ -41,6 +41,8 @@ namespace berry
     **/
    struct process_entry
    {
+      process_entry();
+      
       detail::process::pid_type pid;
       detail::process::pid_type parent_pid;
       std::string name;

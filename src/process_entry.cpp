@@ -43,6 +43,10 @@
 #include <berry/process_entry.hpp>
 #include <berry/error.hpp>
 
+berry::process_entry::process_entry()
+  : pid(0), parent_pid(0), name()
+{ }
+
 #ifdef BERRY_LINUX
 struct snapshot
 {
