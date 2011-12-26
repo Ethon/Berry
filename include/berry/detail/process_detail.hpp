@@ -29,21 +29,45 @@
 
 namespace berry
 {
-   namespace detail
-   {
-      namespace process
-      {
+    namespace detail
+    {
+        namespace process
+        {
 #ifdef BERRY_LINUX
-         typedef int pid_type;
-         unsigned int const max_comm_len = 16;
+            typedef int pid_type;
+            unsigned int const max_comm_len = 16;
+            
+            struct process_data
+            {
+            protected:
+                explicit inline process_data(pid_type pid = 0)
+                    : m_pid(pid)
+                { }
+                
+                pid_type m_pid;
+            };
 #endif
         
 #ifdef BERRY_WINDOWS
-         typedef unsigned long pid_type;
-         unsigned int const max_comm_len = 255;
+            typedef unsigned long pid_type;
+            unsigned int const max_comm_len = 255;
+         
+#           define BERRY_HAS_PROCESS_HANDLE 1
+            typedef void* handle_type;
+            
+            struct process_data
+            {
+            protected:
+                inline process_data(pid_type pid = 0, handle_type handle = 0)
+                    : m_pid(pid), m_handle(0)
+                { }
+                
+                pid_type m_pid;
+                handle_type m_handle;
+            };
 #endif
-      }
-   }
+        }
+    }
 }
 
 #endif // __BERRY_DETAIL_PROCESSDETAIL_HPP__
