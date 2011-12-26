@@ -28,6 +28,7 @@
 #if defined __linux__
 #   define BERRY_VALID_OS 1
 #   define BERRY_LINUX 1
+#   define BERRY_HAS_PROCFS 1
 #   define BERRY_OS_STRING "Linux"
 #endif
 
