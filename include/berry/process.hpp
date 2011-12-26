@@ -26,11 +26,9 @@
 
 // C++ Standard Library:
 #include <string>
-#include <vector>
 
 // Boost Library:
-#include <boost/filesystem.hpp>
-#include <boost/optional.hpp>
+#include <boost/filesystem/path.hpp>
 
 // Berry:
 #include <berry/detail/process_detail.hpp>
