@@ -196,12 +196,7 @@ boost::optional<berry::process_entry> berry::get_entry_by_name(
 
       // Check if we have a match.
       if(name == entry->name)
-      {
-         // Restore case before returning if we converted to lower case.
-         if(!case_sensitive)
-            entry->name = berry::get_name(berry::process(entry->pid));
          return entry;
-      }
    }
    while( (entry = berry::extract_next_process(snapshot)) );
    
