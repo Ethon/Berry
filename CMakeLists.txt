@@ -24,9 +24,6 @@ if(CMAKE_COMPILER_IS_GNUCXX)
   set(CMAKE_CXX_FLAGS_RELEASE "-O3 -s")
 endif()
 
-# Define options.
-option(COMPILE_TESTS "Turn on to compile tests" OFF)
-
 # Boost is required to build Berry.
 find_package(Boost REQUIRED)
 
@@ -51,17 +48,8 @@ target_link_libraries( berry
 )
 
 # Compile tests if wanted.
+option(COMPILE_TESTS "Turn on to compile tests" OFF)
 if(COMPILE_TESTS)
-  add_executable(test_processes
-    test/test_processes.cpp
-  )
-
-  target_link_libraries( test_processes
-    berry
-    boost_system
-    boost_filesystem
-    boost_unit_test_framework
-  )
 endif(COMPILE_TESTS)
 
 # Install.
