@@ -144,7 +144,7 @@ namespace berry
          *
          * @return bool True if the process still exists, false otherwise.
          **/
-        bool still_exists(process proc);
+        bool still_exists() const;
     };
     
     /**
