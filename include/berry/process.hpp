@@ -43,8 +43,11 @@ namespace berry
     /**
      * @brief Represents a process on the system.
      **/
-    class process : private detail::process::process_data
+    class process
     {
+    private:
+        detail::process::process_data m_data;
+        
     public:
         /**
          * @brief Constructs a process object which doesn't represent a process.
@@ -146,6 +149,33 @@ namespace berry
          **/
         bool still_exists() const;
     };
+    
+    /**
+     * @brief Less-than comparison operator.
+     *
+     * @param lhs Process object on the left.
+     * @param rhs Process object on the right.
+     * @return bool True if the left is less than the right.
+     **/
+    bool operator<(process const& lhs, process const& rhs);
+    
+    /**
+     * @brief Equality comparison operator.
+     *
+     * @param lhs Process object on the left.
+     * @param rhs Process object on the right.
+     * @return bool True if both processes specify the same process.
+     **/
+    bool operator==(process const& lhs, process const& rhs);
+
+    /**
+     * @brief Inequality comparison operator.
+     *
+     * @param lhs Process object on the left.
+     * @param rhs Process object on the right.
+     * @return bool True if both processes don't specify the same process.
+     **/
+    bool operator!=(process const& lhs, process const& rhs);
     
     /**
      * @brief Returns the currently active process calling this function.
