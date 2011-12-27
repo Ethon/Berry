@@ -35,8 +35,13 @@ include_directories( include )
 
 # Compile berry as a shared library.
 file(GLOB BERRY_SOURCE_FILES src/*.cpp)
+if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+    file(GLOB BERRY_SYSTEM_SOURCE_FILES src/linux/*.cpp)
+ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+
 add_library( berry SHARED
-  ${BERRY_SOURCE_FILES}
+    ${BERRY_SOURCE_FILES}
+    ${BERRY_SYSTEM_SOURCE_FILES}
 )
 
 # Link libraries.
