@@ -39,31 +39,27 @@ namespace berry
             
             struct process_data
             {
-            protected:
                 explicit inline process_data(pid_type pid = 0)
-                    : m_pid(pid)
+                    : pid(pid)
                 { }
                 
-                pid_type m_pid;
+                pid_type pid;
             };
 #endif
         
 #ifdef BERRY_WINDOWS
             typedef unsigned long pid_type;
-            unsigned int const max_comm_len = 255;
-         
-#           define BERRY_HAS_PROCESS_HANDLE 1
             typedef void* handle_type;
+            unsigned int const max_comm_len = 255;
             
             struct process_data
             {
-            protected:
                 inline process_data(pid_type pid = 0, handle_type handle = 0)
-                    : m_pid(pid), m_handle(0)
+                    : pid(pid), handle(0)
                 { }
                 
-                pid_type m_pid;
-                handle_type m_handle;
+                pid_type pid;
+                handle_type handle;
             };
 #endif
         }
