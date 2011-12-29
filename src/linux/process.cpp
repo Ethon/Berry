@@ -65,7 +65,7 @@ static boost::filesystem::path extract_link(
 }
 
 /******** Constructors and Destructor ********/
-berry::process::process(pid_type)
+berry::process::process()
     : m_data()
 { }
 
