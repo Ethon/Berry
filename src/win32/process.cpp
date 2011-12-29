@@ -98,9 +98,11 @@ static void close_handle(::HANDLE& in)
     
 }
 
-typedef std::unique_ptr<void> handle;
-
 /******** Constructors and Destructor ********/
+berry::process::process(pid_type)
+    : m_data()
+{ }
+
 berry::process::process(pid_type pid)
     : m_data(pid, ::open_handle(pid))
 { }
@@ -113,8 +115,8 @@ berry::process::process(std::string const& name, bool case_sensitive)
    if(!entry)
        throw std::runtime_error("berry::process::process : process not found");
    
-   m_data.pid = entry->pid();
-   m_data.handle = ::open_handle(entry->pid());
+   m_data.pid = entry->pid;
+   m_data.handle = ::open_handle(entry->pid);
 }
         
 berry::process::process(process const& other)

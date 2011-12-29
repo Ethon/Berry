@@ -39,40 +39,11 @@ namespace berry
     /**
      * @brief Class representing a process entry on the system.
      **/
-    class process_entry
+    struct process_entry
     {
-    private:
-        typedef detail::process::pid_type pid_type;
-        pid_type    m_pid;
-        pid_type    m_ppid;
-        std::string m_name;
-  
-    public:
-        /**
-         * @brief Constructs an empty process entry object.
-         **/
-        process_entry();
-        
-        /**
-         * @brief Retrieves the pid of the current process entry.
-         *
-         * @return :process_entry::pid_type The pid.
-         **/
-        pid_type pid() const;
-        
-        /**
-         * @brief Retrieves the parent pid of the current process entry.
-         *
-         * @return :process_entry::pid_type The parents pid.
-         **/
-        pid_type parent_pid() const;
-        
-        /**
-         * @brief Retrieves the name of the current process entry.
-         *
-         * @return :string& The name.
-         **/
-        std::string const& name() const;
+        detail::process::pid_type pid;
+        detail::process::pid_type parent_pid;
+        std::string name;
     };
   
     /**
