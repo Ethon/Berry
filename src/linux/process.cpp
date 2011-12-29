@@ -75,7 +75,7 @@ berry::process::process(std::string const& name, bool case_sensitive)
    boost::optional<process_entry> entry(
        berry::get_entry_by_name(name, case_sensitive));
    if(entry)
-       m_data.pid = entry->pid;
+       m_data.pid = entry->pid();
    else
        throw std::runtime_error("berry::process::process : process not found");
 }
