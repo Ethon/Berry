@@ -99,7 +99,7 @@ static void close_handle(::HANDLE& in)
 }
 
 /******** Constructors and Destructor ********/
-berry::process::process(pid_type)
+berry::process::process()
     : m_data()
 { }
 
