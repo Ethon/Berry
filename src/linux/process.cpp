@@ -54,11 +54,11 @@ static boost::filesystem::path extract_link(
 {
     std::size_t const buffer_size = 1024;
     std::array<char, buffer_size> buffer;
-    ssize_t result = ::readlink(link.c_str(), buffer.data(), buffer.size());
+    ::ssize_t result = ::readlink(link.c_str(), buffer.data(), buffer.size());
     if(result == -1)
     {
         std::error_code error(errno, std::system_category());
-        throw std::system_error(error, "::extract_link : readlink failed");
+        throw std::system_error(error, "::extract_link : ::readlink failed");
     }
    
     return boost::filesystem::path(buffer.begin(), buffer.begin() + result);
@@ -73,7 +73,7 @@ berry::process::process(std::string const& name, bool case_sensitive)
     : m_data()
 {
    boost::optional<process_entry> entry(
-       get_entry_by_name(name, case_sensitive));
+       berry::get_entry_by_name(name, case_sensitive));
    if(entry)
        m_data.pid = entry->pid;
    else
@@ -158,7 +158,7 @@ void berry::process::terminate(bool force)
     {
         std::error_code error(errno, std::system_category());
         throw std::system_error(error,
-            "berry::process::terminate : kill failed");
+            "berry::process::terminate : ::kill failed");
     }
 }
         
@@ -183,7 +183,7 @@ berry::process& berry::process::operator=(berry::process&& other)
 /******** Free functions ********/
 berry::process const& berry::get_current_process()
 {
-    static berry::process const current_process(getpid());
+    static berry::process const current_process(::getpid());
     return current_process;
 }
 
