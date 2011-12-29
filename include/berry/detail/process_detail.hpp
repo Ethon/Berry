@@ -35,7 +35,7 @@ namespace berry
         {
 #ifdef BERRY_LINUX
             typedef int pid_type;
-            unsigned int const max_comm_len = 16;
+            unsigned int const max_comm_len = 15;
             
             struct process_data
             {
@@ -50,7 +50,7 @@ namespace berry
 #ifdef BERRY_WINDOWS
             typedef unsigned long pid_type;
             typedef void* handle_type;
-            unsigned int const max_comm_len = 255;
+            unsigned int const max_comm_len = 254;
             
             struct process_data
             {

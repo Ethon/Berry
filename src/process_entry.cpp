@@ -22,184 +22,72 @@
  */
 
 // C++ Standard Library:
-#include <limits>
+#include <string>
+#include <algorithm>
 
 // Boost Library:
 #include <boost/optional.hpp>
-#include <boost/filesystem.hpp>
-#include <boost/filesystem/fstream.hpp>
-
-// System:
-#include <berry/detail/system.hpp>
-#ifdef BERRY_LINUX
-#  include <glob.h>
-#elif defined BERRY_WINDOWS
-#  include <Windows.h>
-#  include <Tlhelp32.h>
-#endif
+#include <boost/algorithm/string/compare.hpp>
 
 // Berry:
 #include <berry/process.hpp>
 #include <berry/process_entry.hpp>
-#include <berry/error.hpp>
-
-berry::process_entry::process_entry()
-  : pid(0), parent_pid(0), name()
-{ }
-
-#ifdef BERRY_LINUX
-struct snapshot
-{
-   snapshot()
-      : data_ptr(0), data()
-   {
-      int result =
-         glob("/proc/[0-9]*", GLOB_ONLYDIR, NULL, &data);
-      if(result == GLOB_NOSPACE)
-         throw berry::unexpected_error("Out of memory");
-      if(result == GLOB_ABORTED || result == GLOB_NOMATCH)
-         throw berry::unexpected_error("procfs not correctly mounted");
-   }
-   
-   ~snapshot()
-   {
-      globfree(&data);
-   }
-   
-   std::size_t data_ptr;
-   glob_t data;
-};
-   
-static void destroy_snapshot(void* snap)
-{
-   delete static_cast<snapshot*>(snap);
-}
-
-static berry::process_entry make_entry_from_path(boost::filesystem::path& dir)
-{
-   dir /= "stat";
-   boost::filesystem::ifstream stat(dir);
-   
-   berry::process_entry result;
-   (stat >> result.pid).ignore(
-      std::numeric_limits<std::streamsize>::max(), '(');
-   std::getline(stat, result.name, ')');
-   char dummy; stat >> dummy >> result.parent_pid;
-   
-   return result;
-}
-#endif
-
-
-berry::process_snapshot_type berry::create_process_snapshot()
-{
-#ifdef BERRY_LINUX
-   return berry::process_snapshot_type(new snapshot(), &destroy_snapshot);
-   
-#elif defined BERRY_WINDOWS
-   HANDLE snap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-   if(snap == INVALID_HANDLE_VALUE)
-   {
-      int error = GetLastError();
-      throw berry::system_error("CreateToolhelp32Snapshot() failed", error);
-   }
-   return berry::process_snapshot_type(snap, &CloseHandle);
-#endif
-}
-   
-berry::process_entry
-   berry::extract_first_process(berry::process_snapshot_type& snap)
-{
-#ifdef BERRY_LINUX
-   snapshot* ss = static_cast<snapshot*>(snap.get());
-   boost::filesystem::path dir(ss->data.gl_pathv[ss->data_ptr++]);
-   return make_entry_from_path(dir);
-   
-#elif defined BERRY_WINDOWS
-   PROCESSENTRY32A entry;
-   entry.dwSize = sizeof(entry);
-   if(!Process32FirstA(snap, &entry))
-   {
-      int error = GetLastError();
-      throw berry::system_error("Process32FirstA() failed", error);
-   }
-   return { entry.th32ProcessID, entry.th32ParentProcessID, entry.szExeFile };
-#endif
-}
-   
-boost::optional<berry::process_entry> berry::extract_next_process(
-   berry::process_snapshot_type& snap)
-{
-#ifdef BERRY_LINUX
-   snapshot* ss = static_cast<snapshot*>(snap.get());
-   if(ss->data_ptr < ss->data.gl_pathc)
-   {
-      boost::filesystem::path dir(ss->data.gl_pathv[ss->data_ptr++]);
-      return boost::optional<berry::process_entry>(make_entry_from_path(dir));
-   }
-   
-#elif defined BERRY_WINDOWS
-   PROCESSENTRY32A entry;
-   entry.dwSize = sizeof(entry);
-   if(Process32NextA(snap, &entry))
-   {
-      return boost::optional<berry::process_entry>(
-         { entry.th32ProcessID, entry.th32ParentProcessID, entry.szExeFile });
-   }
-#endif
-   
-   return boost::optional<berry::process_entry>();
-}
 
 boost::optional<berry::process_entry> berry::get_entry_by_pid(
-   berry::detail::process::pid_type pid)
+    berry::detail::process::pid_type pid)
 {
-   // Iterate all processes.
-   auto snapshot = berry::create_process_snapshot();
-   boost::optional<berry::process_entry> entry =
-      berry::extract_first_process(snapshot);
-   do
-   {
-      // Check if we have a match.
-      if(entry->pid == pid)
-         return entry;
-   }
-   while( (entry = berry::extract_next_process(snapshot)) );
+    // Iterate all processes.
+    berry::process_snapshot snapshot = berry::create_process_snapshot();
+    boost::optional<berry::process_entry> entry =
+        berry::extract_first_process(snapshot);
+    do
+    {
+        // Check if we have a match.
+        if(entry->pid == pid)
+            return entry;
+    }
+    while( (entry = berry::extract_next_process(snapshot)) );
    
-   // We have no match.
-   return boost::optional<berry::process_entry>();
+    // We have no match.
+    return boost::optional<berry::process_entry>();
 }
    
 boost::optional<berry::process_entry> berry::get_entry_by_name(
-   std::string name, bool case_sensitive)
+    std::string const& name, bool case_sensitive)
 {
-#ifdef BERRY_LINUX
-   // Adjust name length if we're on a system which limits this.
-   if(name.length() >= berry::detail::process::max_comm_len)
-      name.resize(berry::detail::process::max_comm_len - 1);
-#endif
-      
-   // Convert to lower case if we don't compare case sensitive.
-   if(!case_sensitive)
-      std::transform(name.begin(), name.end(), name.begin(), &tolower);
+    std::string::const_iterator name_begin = name.begin();
+    std::string::const_iterator name_end = name.end();
+    
+    // Adjust name length if we're on a system which limits this.
+    if(name.length() >= berry::detail::process::max_comm_len)
+        name_end = name_begin + berry::detail::process::max_comm_len;
+    
+    // Iterate all processes.
+    berry::process_snapshot snapshot = berry::create_process_snapshot();
+    boost::optional<berry::process_entry> entry =
+        berry::extract_first_process(snapshot);
+    do
+    {
+        // Check if we have a match.
+        if(case_sensitive)
+        {
+            if(std::equal(name_begin, name_end, entry->name.begin(),
+                boost::algorithm::is_equal()))
+            {
+                return entry;
+            }
+        }
+        else
+        {
+            if(std::equal(name_begin, name_end, entry->name.begin(),
+                boost::algorithm::is_iequal()))
+            {
+                return entry;
+            }
+        }
+    }
+    while( (entry = berry::extract_next_process(snapshot)) );
    
-   // Iterate all processes.
-   auto snapshot = berry::create_process_snapshot();
-   boost::optional<berry::process_entry> entry =
-      berry::extract_first_process(snapshot);
-   do
-   {
-      // Convert to lower case if we don't compare case sensitive.
-      if(!case_sensitive)
-         std::transform(entry->name.begin(), entry->name.end(),
-            entry->name.begin(), &tolower);
-
-      // Check if we have a match.
-      if(name == entry->name)
-         return entry;
-   }
-   while( (entry = berry::extract_next_process(snapshot)) );
-   
-   // We have no match.
-   return boost::optional<berry::process_entry>();
+    // We have no match.
+    return boost::optional<berry::process_entry>();
 }

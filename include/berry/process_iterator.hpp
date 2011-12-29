@@ -44,7 +44,7 @@ namespace berry
       friend class boost::iterator_core_access;
       
    private:
-      process_snapshot_type m_snap;
+      process_snapshot m_snap;
       boost::optional<process_entry> m_entry;
 
       void increment();
