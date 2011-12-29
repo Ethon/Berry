@@ -36,37 +36,64 @@
 
 namespace berry
 {
-   /**
-    * @brief Class representing a process entry on the system.
-    **/
-   struct process_entry
-   {
-      process_entry();
-      
-      detail::process::pid_type pid;
-      detail::process::pid_type parent_pid;
-      std::string name;
-   };
+    /**
+     * @brief Class representing a process entry on the system.
+     **/
+    class process_entry
+    {
+    private:
+        typedef detail::process::pid_type pid_type;
+        pid_type    m_pid;
+        pid_type    m_ppid;
+        std::string m_name;
   
-   /**
-    * @brief Type used to store snapshots of processes.
-    **/
-   typedef std::shared_ptr<void> process_snapshot_type;
+    public:
+        /**
+         * @brief Constructs an empty process entry object.
+         **/
+        process_entry();
+        
+        /**
+         * @brief Retrieves the pid of the current process entry.
+         *
+         * @return :process_entry::pid_type The pid.
+         **/
+        pid_type pid() const;
+        
+        /**
+         * @brief Retrieves the parent pid of the current process entry.
+         *
+         * @return :process_entry::pid_type The parents pid.
+         **/
+        pid_type parent_pid() const;
+        
+        /**
+         * @brief Retrieves the name of the current process entry.
+         *
+         * @return :string& The name.
+         **/
+        std::string const& name() const;
+    };
   
-   /**
-    * @brief Creates a snapshot of all running processes on the system.
-    *
-    * @return process_snapshot_type The created snapshot.
-    **/
-   process_snapshot_type create_process_snapshot();
+    /**
+     * @brief Type used to store snapshots of processes.
+     **/
+    typedef std::shared_ptr<void> process_snapshot;
+  
+    /**
+     * @brief Creates a snapshot of all running processes on the system.
+     *
+     * @return process_snapshot_type The created snapshot.
+     **/
+    process_snapshot create_process_snapshot();
    
-   /**
-    * @brief Extracts the first process entry from the snapshot.
-    *
-    * @param snap The snapshot to extract from.
-    * @return :process_entry The first process.
-    **/
-   process_entry extract_first_process(process_snapshot_type& snap);
+    /**
+     * @brief Extracts the first process entry from the snapshot.
+     *
+     * @param snap The snapshot to extract from.
+     * @return :process_entry The first process.
+     **/
+    process_entry extract_first_process(process_snapshot& snap);
    
    /**
     * @brief Extracts the next process entry from the snapshot.
@@ -74,29 +101,27 @@ namespace berry
     * @param snap The snapshot to extract from.
     * @return :optional< berry::process_entry > The next process .
     **/
-   boost::optional<process_entry> extract_next_process(
-      process_snapshot_type& snap);
+    boost::optional<process_entry> extract_next_process(
+        process_snapshot& snap);
+   
+    /**
+     * @brief Retrieves a process entry by its identifier.
+     *
+     * @param pid The pid to look for.
+     * @return :optional< berry::process_entry > The matching entry.
+     **/
+    boost::optional<process_entry> get_entry_by_pid(
+        detail::process::pid_type pid);
    
    /**
-    * @brief Retrieves a process entry by its identifier.
-    *
-    * @param pid The pid to look for.
-    * @return :optional< berry::process_entry > The matching entry.
-    **/
-   boost::optional<process_entry> get_entry_by_pid(
-      detail::process::pid_type pid);
-   
-   /**
-    * @brief Retrieves a process entry by its name.
-    * Many systems limit this to a few characters, so this function may yield
-    * false results on those systems. Use get_executable_path to be sure to
-    * determine the full name.
-    * @param name The name to look for.
-    * @param case_sensitive Decide if the search is case sensitive or not.
-    * @return :optional< berry::process_entry > The matching entry.
-    **/
-   boost::optional<process_entry> get_entry_by_name(std::string name,
-      bool case_sensitive = true);
+     * @brief Retrieves a process entry by its name.
+     * 
+     * @param name The name to look for.
+     * @param case_sensitive Decide if the search is case sensitive or not.
+     * @return :optional< berry::process_entry > The matching entry.
+     **/
+    boost::optional<process_entry> get_entry_by_name(std::string const& name,
+        bool case_sensitive = true);
 }
 
 #endif // __BERRY_PROCESSENTRY_HPP__
