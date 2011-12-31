@@ -188,6 +188,15 @@ namespace berry
     namespace unix_like
     {
         /**
+         * @brief Sets the ProcFS base directory.
+         * Per default the ProcFS base directory is set to the most common
+         * path on the system (e.g. /proc on Linux). Call this function if
+         * the ProcFS is mounted somewhere else.
+         * @param base_dir The base of the ProcFS.
+         **/
+        void set_procfs_base(boost::filesystem::path const& base_dir);
+        
+        /**
          * @brief Returns the ProcFS directory of the specified process.
          * Some systems implement the Proc filesystem. For those systems, the
          * path to the process' directory inside the ProcFS is returned.

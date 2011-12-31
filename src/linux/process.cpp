@@ -36,6 +36,7 @@
 #include <string>
 #include <stdexcept>
 #include <array>
+#include <cassert>
 #include <system_error>
 
 // Boost:
@@ -191,3 +192,15 @@ berry::process const& berry::get_current_process()
     return current_process;
 }
 
+static boost::filesystem::path g_procfs_base("/proc/");
+
+void berry::unix_like::set_procfs_base(boost::filesystem::path const& base_dir)
+{
+    assert(boost::filesystem::exists(base_dir));
+    g_procfs_base = base_dir;
+}
+
+boost::filesystem::path berry::unix_like::get_procfs_dir(berry::process proc)
+{
+    return g_procfs_base / std::to_string(proc.pid());
+}
