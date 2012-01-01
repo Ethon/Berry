@@ -20,8 +20,8 @@ project(berry)
 # Set appropiate flags. A C++11 compiler is required.
 if(CMAKE_COMPILER_IS_GNUCXX)
   set(CMAKE_CXX_FLAGS "-std=c++0x -Wall -Wextra -Weffc++ -pedantic")
-  set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g")
-  set(CMAKE_CXX_FLAGS_RELEASE "-O3 -s")
+  set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g -DBOOST_ENABLE_ASSERT_HANDLER")
+  set(CMAKE_CXX_FLAGS_RELEASE "-O3 -s -DNDEBUG")
 endif()
 
 # Boost is required to build Berry.
@@ -46,6 +46,12 @@ target_link_libraries( berry
   boost_system
   boost_filesystem
 )
+
+# Compile Python bindings if wanted.
+option(COMPILE_PYTHON_BINDINGS "Turn on to compile Python bindings" ON)
+if(COMPILE_PYTHON_BINDINGS)
+    add_subdirectory(python)
+endif(COMPILE_PYTHON_BINDINGS)
 
 # Compile tests if wanted.
 option(COMPILE_TESTS "Turn on to compile tests" OFF)

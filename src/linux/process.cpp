@@ -1,7 +1,7 @@
 /**
  * @file linux/process.cpp
  * @author Ethon aka Florian Erler (ethon [a-t] ethon.cc)
- * @date 2011
+ * @date 2011, 2012
  * @version 1.0a
  * @brief Public process API for Linux. 
  * 
@@ -36,10 +36,10 @@
 #include <string>
 #include <stdexcept>
 #include <array>
-#include <cassert>
 #include <system_error>
 
 // Boost:
+#include <boost/assert.hpp>
 #include <boost/filesystem/path.hpp>
 #include <boost/filesystem/fstream.hpp>
 #include <boost/filesystem/operations.hpp>
@@ -104,6 +104,8 @@ berry::pid_type berry::process::pid() const
 
 std::string berry::process::name() const
 {
+    BOOST_ASSERT(pid() != 0);
+    
     std::string result;
     {
         boost::filesystem::ifstream comm(
@@ -120,11 +122,15 @@ std::string berry::process::name() const
         
 boost::filesystem::path berry::process::executable_path() const
 {
+    BOOST_ASSERT(pid() != 0);
+    
     return ::extract_link(berry::unix_like::get_procfs_dir(*this) / "exe");
 }
         
 int berry::process::bitness() const
 {
+    BOOST_ASSERT(pid() != 0);
+    
     // Open the process' executable and read the elf ident.
     std::array<char, EI_NIDENT> ident;
     {
@@ -158,6 +164,8 @@ int berry::process::bitness() const
 
 void berry::process::terminate(bool force)
 {
+    BOOST_ASSERT(pid() != 0);
+    
     // Send a sigterm to the process.
     if(::kill(pid(), force ? SIGKILL : SIGTERM) == -1)
     {
@@ -169,6 +177,9 @@ void berry::process::terminate(bool force)
         
 bool berry::process::still_exists() const
 {
+    if(pid() == 0)
+        return false;
+    
     return boost::filesystem::exists(berry::unix_like::get_procfs_dir(*this));
 }
 
@@ -196,7 +207,7 @@ static boost::filesystem::path g_procfs_base("/proc/");
 
 void berry::unix_like::set_procfs_base(boost::filesystem::path const& base_dir)
 {
-    assert(boost::filesystem::exists(base_dir));
+    BOOST_ASSERT(boost::filesystem::exists(base_dir));
     g_procfs_base = base_dir;
 }
 

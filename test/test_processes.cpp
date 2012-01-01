@@ -22,7 +22,7 @@ BOOST_AUTO_TEST_SUITE(BerryProcessAPI)
 BOOST_AUTO_TEST_CASE(BerryProcessGetName)
 {
    process self(berry::get_current_process());
-   std::string name(berry::get_name(self));
+   std::string name(self.name());
    
    std::cout << "Current process name: " << name << '\n';
    BOOST_CHECK(!name.empty());
@@ -34,10 +34,11 @@ BOOST_AUTO_TEST_CASE(BerryProcessStillExists)
    process existing(berry::get_current_process());
    process non_existing(std::numeric_limits<int>::max() - 317);
       
-   BOOST_CHECK(berry::still_exists(existing));
-   BOOST_CHECK(!berry::still_exists(non_existing));
+   BOOST_CHECK(existing.still_exists());
+   BOOST_CHECK(!non_existing.still_exists());
 }
 
+#if BERRY_HAS_PROCFS
 // Test berry::unix_like::get_procfs_dir
 BOOST_AUTO_TEST_CASE(BerryProcessGetProcfsDir)
 {
@@ -46,18 +47,9 @@ BOOST_AUTO_TEST_CASE(BerryProcessGetProcfsDir)
      
    std::cout << "Current process procfs directory: "
       << proc_dir.string() << '\n';
-   BOOST_CHECK(boost::filesystem::exists(proc_dir) || proc_dir.empty());
+   BOOST_CHECK(boost::filesystem::exists(proc_dir));
 }
-
-// Test berry::get_working_dir
-BOOST_AUTO_TEST_CASE(BerryProcessGetWorkingDir)
-{
-   process self(berry::get_current_process());
-   boost::filesystem::path cwd(berry::get_working_dir(self));
-      
-   std::cout << "Current process working directory: " << cwd.string() << '\n';
-   BOOST_CHECK(boost::filesystem::exists(cwd));
-}
+#endif
 
 // Test berry::get_exexcutable_path
 BOOST_AUTO_TEST_CASE(BerryProcessGetExecutablePath)
