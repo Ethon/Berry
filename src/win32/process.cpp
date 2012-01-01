@@ -142,11 +142,14 @@ berry::pid_type berry::process::pid() const
 
 std::string berry::process::name() const
 {
+    BOOST_ASSERT(m_data.handle);
     return executable_path().filename().string();
 }
         
 boost::filesystem::path berry::process::executable_path() const
 {
+    BOOST_ASSERT(m_data.handle);
+    
     std::array<wchar_t, MAX_PATH> buffer;
     ::DWORD len = buffer.size();
     
@@ -165,6 +168,8 @@ boost::filesystem::path berry::process::executable_path() const
         
 int berry::process::bitness() const
 {
+    BOOST_ASSERT(m_data.handle);
+    
     // First check if we are on a 64bit Windows, else its always 32bit.
     if(!::GetSystemWow64DirectoryW(nullptr, 0))
     {
@@ -187,6 +192,8 @@ int berry::process::bitness() const
 
 void berry::process::terminate(bool)
 {
+    BOOST_ASSERT(m_data.handle);
+    
     ::HANDLE terminate = ::OpenProcess(PROCESS_TERMINATE, FALSE, 0);
     if(!terminate)
     {
@@ -208,6 +215,9 @@ void berry::process::terminate(bool)
         
 bool berry::process::still_exists() const
 {
+    if(pid() == 0)
+        return false;
+    
     ::DWORD exit_code;
     if(!::GetExitCodeProcess(m_data.handle, &exit_code))
     {
