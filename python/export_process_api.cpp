@@ -25,6 +25,7 @@
 #include <boost/python/class.hpp>
 #include <boost/python/args.hpp>
 #include <boost/python/str.hpp>
+#include <boost/python/object.hpp>
 #include <boost/python/def.hpp>
 #include <boost/python/implicit.hpp>
 #include <boost/python/operators.hpp>
@@ -37,9 +38,9 @@
 
 namespace bp = boost::python;
 
-static std::string wrap_executable_path(berry::process const* obj)
+static boost::python::str wrap_executable_path(berry::process const* obj)
 {
-    return obj->executable_path().string();
+    return boost::python::str(obj->executable_path().c_str());
 }
 
 #ifdef BERRY_HAS_PROCFS
@@ -49,7 +50,40 @@ static void wrap_set_procfs_base(std::string const& base)
 }
 #endif
 
-void export_process_hpp()
+static boost::python::object wrap_extract_next_process(
+    berry::process_snapshot& snapshot)
+{
+    boost::optional<berry::process_entry> next =
+        berry::extract_first_process(snapshot);
+    if(next)
+        return boost::python::object(*next);
+    else
+        return boost::python::object();
+}
+
+static boost::python::object wrap_get_entry_by_name(
+    ::std::string const& name, bool case_sensitive = false)
+{
+    boost::optional<berry::process_entry> entry = 
+        berry::get_entry_by_name(name, case_sensitive);
+    if(entry)
+        return boost::python::object(*entry);
+    else
+        return boost::python::object();
+}
+
+static boost::python::object wrap_get_entry_by_pid(
+    berry::pid_type pid)
+{
+    boost::optional<berry::process_entry> entry = 
+        berry::get_entry_by_pid(pid);
+    if(entry)
+        return boost::python::object(*entry);
+    else
+        return boost::python::object();
+}
+
+static void export_process_hpp()
 {
     //::berry::process
     typedef bp::class_<berry::process> process_exposer_t;
@@ -72,7 +106,7 @@ void export_process_hpp()
     }
     
     { //::berry::process::executable_path
-        typedef ::std::string (*executable_path_function_type)
+        typedef ::boost::python::str (*executable_path_function_type)
             (berry::process const*);
         process_exposer.def( 
             "executable_path",
@@ -149,4 +183,74 @@ void export_process_hpp()
 #endif
 
     bp::scope().attr("not_a_process") = berry::not_a_process;
+}
+
+static void export_process_entry_hpp()
+{
+    bp::class_<berry::process_entry>("process_entry", bp::init<>())    
+        .def_readwrite("name", &berry::process_entry::name)    
+        .def_readwrite("parent_pid", &berry::process_entry::parent_pid)    
+        .def_readwrite("pid", &berry::process_entry::pid);
+        
+    bp::class_<berry::process_snapshot>("process_snapshot", bp::init<>());
+
+    { //::berry::create_process_snapshot
+        typedef ::berry::process_snapshot
+            (*create_process_snapshot_function_type)();
+        
+        bp::def( 
+            "create_process_snapshot",
+            create_process_snapshot_function_type(
+                &::berry::create_process_snapshot));
+    
+    }
+
+    { //::berry::extract_first_process
+        typedef ::berry::process_entry (*extract_first_process_function_type)
+            (::berry::process_snapshot&);
+        
+        bp::def( 
+            "extract_first_process",
+            extract_first_process_function_type(
+                &::berry::extract_first_process),
+            (bp::arg("snap")));
+    }
+
+    { //::berry::extract_next_process
+        typedef ::boost::python::object (*extract_next_process_function_type)
+            (::berry::process_snapshot&);
+        
+        bp::def( 
+            "extract_next_process",
+            extract_next_process_function_type(&::wrap_extract_next_process),
+            (bp::arg("snap")));
+    }
+
+    { //::berry::get_entry_by_name
+    
+        typedef ::boost::python::object (*get_entry_by_name_function_type)
+            (::std::string const&, bool);
+        
+        bp::def( 
+            "get_entry_by_name",
+            get_entry_by_name_function_type(&::wrap_get_entry_by_name),
+            (bp::arg("name"), bp::arg("case_sensitive")=(bool)(true)));
+    }
+
+    { //::berry::get_entry_by_pid
+    
+        typedef ::boost::python::object (*get_entry_by_pid_function_type)
+            (::berry::detail::process::pid_type);
+        
+        bp::def( 
+            "get_entry_by_pid",
+            get_entry_by_pid_function_type(&::wrap_get_entry_by_pid),
+            (bp::arg("pid")));
+    }
+}
+
+void export_process_api()
+{
+    export_process_hpp();
+    export_process_entry_hpp();
 }
