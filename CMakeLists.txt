@@ -20,7 +20,7 @@ project(berry)
 # Set appropiate flags. A C++11 compiler is required.
 if(CMAKE_COMPILER_IS_GNUCXX)
   set(CMAKE_CXX_FLAGS "-std=c++0x -Wall -Wextra -Weffc++ -pedantic")
-  set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g -DBOOST_ENABLE_ASSERT_HANDLER")
+  set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g")
   set(CMAKE_CXX_FLAGS_RELEASE "-O3 -s -DNDEBUG")
 endif()
 
@@ -30,12 +30,18 @@ find_package(Boost REQUIRED)
 # Specify include directories.
 include_directories( include )
 
-# Compile berry as a shared library.
-file(GLOB BERRY_SOURCE_FILES src/*.cpp)
+# Detect operating system.
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-    file(GLOB BERRY_SYSTEM_SOURCE_FILES src/linux/*.cpp)
-ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+    set(OPERATING_SYSTEM "linux")
+endif(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 
+if(WIN32)
+    set(OPERATING_SYSTEM "win32")
+endif(WIN32)
+
+# Compile berry as a shared library.
+file(GLOB BERRY_SOURCE_FILES "src/*.cpp")
+file(GLOB BERRY_SYSTEM_SOURCE_FILES "src/${OPERATING_SYSTEM}/*.cpp")
 add_library( berry SHARED
     ${BERRY_SOURCE_FILES}
     ${BERRY_SYSTEM_SOURCE_FILES}
@@ -59,6 +65,8 @@ if(COMPILE_TESTS)
 endif(COMPILE_TESTS)
 
 # Install.
-file(GLOB_RECURSE BERRY_HEADER_FILES include/*.hpp)
+file(GLOB_RECURSE BERRY_HEADER_FILES include/berry/*.hpp)
+file(GLOB_RECURSE BERRY_DETAIL_HEADER_FILES include/berry/detail/*.hpp)
 install(TARGETS berry DESTINATION lib)
-install(FILES ${BERRY_HEADER_FILES} DESTINATION include)
+install(FILES ${BERRY_HEADER_FILES} DESTINATION include/berry)
+install(FILES ${BERRY_DETAIL_HEADER_FILES} DESTINATION include/berry/detail)
