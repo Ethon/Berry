@@ -25,17 +25,20 @@
 
 berry::process berry::not_a_process;
 
-bool berry::operator<(berry::process const& lhs, berry::process const& rhs)
+bool berry::operator<(berry::process_param_type lhs,
+    berry::process_param_type rhs)
 {
     return lhs.pid() < rhs.pid();
 }
     
-bool berry::operator==(berry::process const& lhs, berry::process const& rhs)
+bool berry::operator==(berry::process_param_type lhs,
+    berry::process_param_type rhs)
 {
     return lhs.pid() == rhs.pid();
 }
 
-bool berry::operator!=(berry::process const& lhs, berry::process const& rhs)
+bool berry::operator!=(berry::process_param_type lhs,
+    berry::process_param_type rhs)
 {
     return lhs.pid() != rhs.pid();
 }

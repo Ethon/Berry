@@ -151,13 +151,18 @@ namespace berry
     };
     
     /**
+     * @brief Type to use in function expecting a const process object.
+     **/
+    typedef process BERRY_PROCESS_AS_PARAM process_param_type;
+    
+    /**
      * @brief Less-than comparison operator.
      *
      * @param lhs Process object on the left.
      * @param rhs Process object on the right.
      * @return bool True if the left is less than the right.
      **/
-    bool operator<(process const& lhs, process const& rhs);
+    bool operator<(process_param_type lhs, process_param_type rhs);
     
     /**
      * @brief Equality comparison operator.
@@ -166,7 +171,7 @@ namespace berry
      * @param rhs Process object on the right.
      * @return bool True if both processes specify the same process.
      **/
-    bool operator==(process const& lhs, process const& rhs);
+    bool operator==(process_param_type lhs, process_param_type rhs);
 
     /**
      * @brief Inequality comparison operator.
@@ -175,7 +180,7 @@ namespace berry
      * @param rhs Process object on the right.
      * @return bool True if both processes don't specify the same process.
      **/
-    bool operator!=(process const& lhs, process const& rhs);
+    bool operator!=(process_param_type lhs, process_param_type rhs);
     
     /**
      * @brief Returns the currently active process calling this function.
@@ -183,7 +188,6 @@ namespace berry
      * @return :process& The current process.
      **/
     process const& get_current_process();
-    
     
     /**
      * @brief Process type which doesn't represent a real process.
