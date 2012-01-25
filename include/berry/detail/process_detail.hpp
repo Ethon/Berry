@@ -46,7 +46,7 @@ namespace berry
                 pid_type pid;
             };
 
-#           define BERRY_PROCESS_AS_PARAM
+#           define BERRY_PROCESS_AS_PARAM process
 #endif
         
 #ifdef BERRY_WINDOWS
@@ -63,7 +63,7 @@ namespace berry
                 pid_type pid;
                 handle_type handle;
             };
-#           define BERRY_PROCESS_AS_PARAM const&
+#           define BERRY_PROCESS_AS_PARAM process const&
 #endif
         }
     }

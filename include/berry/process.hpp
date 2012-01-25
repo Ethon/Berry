@@ -53,14 +53,14 @@ namespace berry
          * @brief Constructs a process object which doesn't represent a process.
          **/
         process();
-    
+
         /**
          * @brief Constructs a process object from a process id.
          * 
          * @param pid The process' id.
          **/
         explicit process(pid_type pid);
-        
+
         /**
          * @brief Constructs a process object from a process name.
          *
@@ -68,26 +68,26 @@ namespace berry
          * @param case_sensitive Pass true to search case sensitive.
          **/
         process(std::string const& name, bool case_sensitive = true);
-        
+
         /**
          * @brief Constructs a process object from copying another process.
          * 
          * @param other Another process to copy.
          **/
         process(process const& other);
-        
+
         /**
          * @brief Constructs a process object from moving another process.
          * 
          * @param other Another process to move.
          **/
         process(process&& other);
-        
+ 
         /**
          * @brief Destructs the process object.
          **/
         ~process();
-        
+
         /**
          * @brief Copies another process object.
          *
@@ -95,7 +95,7 @@ namespace berry
          * @return :process& *this
          **/
         process& operator=(process const& other);
-        
+    
         /**
          * @brief Moves another process object.
          * 
@@ -153,7 +153,7 @@ namespace berry
     /**
      * @brief Type to use in function expecting a const process object.
      **/
-    typedef process BERRY_PROCESS_AS_PARAM process_param_type;
+    typedef BERRY_PROCESS_AS_PARAM process_param_type;
     
     /**
      * @brief Less-than comparison operator.
@@ -192,7 +192,7 @@ namespace berry
     /**
      * @brief Process type which doesn't represent a real process.
      **/
-    extern process not_a_process;
+    extern process const not_a_process;
     
 #ifdef BERRY_HAS_PROCFS 
     namespace unix_like

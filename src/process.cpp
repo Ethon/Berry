@@ -23,7 +23,7 @@
 
 #include <berry/process.hpp>
 
-berry::process berry::not_a_process;
+berry::process const berry::not_a_process;
 
 bool berry::operator<(berry::process_param_type lhs,
     berry::process_param_type rhs)
