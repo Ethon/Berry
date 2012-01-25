@@ -23,6 +23,8 @@
 
 #include <berry/process.hpp>
 
+berry::process not_a_process();
+
 bool berry::operator<(berry::process const& lhs, berry::process const& rhs)
 {
     return lhs.pid() < rhs.pid();

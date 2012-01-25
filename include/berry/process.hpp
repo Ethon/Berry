@@ -184,6 +184,12 @@ namespace berry
      **/
     process const& get_current_process();
     
+    
+    /**
+     * @brief Process type which doesn't represent a real process.
+     **/
+    extern process not_a_process;
+    
 #ifdef BERRY_HAS_PROCFS 
     namespace unix_like
     {

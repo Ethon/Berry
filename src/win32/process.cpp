@@ -35,12 +35,14 @@
 #include <array>
 #include <system_error>
 #include <memory>
+#include <cassert>
 
 // Berry:
 #include <berry/process.hpp>
 #include <berry/detail/process_detail.hpp>
 #include <berry/process_entry.hpp>
 
+#define ASSERT_PROCESS() assert(*this != berry::not_a_process)
 
 /******** Free helper functions ********/
 static ::HANDLE copy_handle(::HANDLE in)
@@ -95,7 +97,6 @@ static void close_handle(::HANDLE& in)
         
         in = 0;
     }
-    
 }
 
 /******** Constructors and Destructor ********/
@@ -142,13 +143,13 @@ berry::pid_type berry::process::pid() const
 
 std::string berry::process::name() const
 {
-    BOOST_ASSERT(m_data.handle);
+    ASSERT_PROCESS();
     return executable_path().filename().string();
 }
         
 boost::filesystem::path berry::process::executable_path() const
 {
-    BOOST_ASSERT(m_data.handle);
+    ASSERT_PROCESS();
     
     std::array<wchar_t, MAX_PATH> buffer;
     ::DWORD len = buffer.size();
@@ -168,7 +169,7 @@ boost::filesystem::path berry::process::executable_path() const
         
 int berry::process::bitness() const
 {
-    BOOST_ASSERT(m_data.handle);
+    ASSERT_PROCESS();
     
     // First check if we are on a 64bit Windows, else its always 32bit.
     if(!::GetSystemWow64DirectoryW(nullptr, 0))
@@ -192,7 +193,7 @@ int berry::process::bitness() const
 
 void berry::process::terminate(bool)
 {
-    BOOST_ASSERT(m_data.handle);
+    ASSERT_PROCESS();
     
     ::HANDLE terminate = ::OpenProcess(PROCESS_TERMINATE, FALSE, 0);
     if(!terminate)

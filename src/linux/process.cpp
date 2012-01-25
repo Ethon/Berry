@@ -33,6 +33,7 @@
 #include <unistd.h>
 
 // C++ Standard Library:
+#include <cassert>
 #include <string>
 #include <stdexcept>
 #include <array>
@@ -48,6 +49,8 @@
 #include <berry/process.hpp>
 #include <berry/detail/process_detail.hpp>
 #include <berry/process_entry.hpp>
+
+#define ASSERT_PROCESS() assert(*this != berry::not_a_process)
 
 /******** Free helper functions ********/
 static boost::filesystem::path extract_link(
@@ -104,7 +107,7 @@ berry::pid_type berry::process::pid() const
 
 std::string berry::process::name() const
 {
-    BOOST_ASSERT(pid() != 0);
+    ASSERT_PROCESS();
     
     std::string result;
     {
@@ -122,14 +125,14 @@ std::string berry::process::name() const
         
 boost::filesystem::path berry::process::executable_path() const
 {
-    BOOST_ASSERT(pid() != 0);
+    ASSERT_PROCESS();
     
     return ::extract_link(berry::unix_like::get_procfs_dir(*this) / "exe");
 }
         
 int berry::process::bitness() const
 {
-    BOOST_ASSERT(pid() != 0);
+    ASSERT_PROCESS();
     
     // Open the process' executable and read the elf ident.
     std::array<char, EI_NIDENT> ident;
@@ -164,7 +167,7 @@ int berry::process::bitness() const
 
 void berry::process::terminate(bool force)
 {
-    BOOST_ASSERT(pid() != 0);
+    ASSERT_PROCESS();
     
     // Send a sigterm to the process.
     if(::kill(pid(), force ? SIGKILL : SIGTERM) == -1)
@@ -207,7 +210,7 @@ static boost::filesystem::path g_procfs_base("/proc/");
 
 void berry::unix_like::set_procfs_base(boost::filesystem::path const& base_dir)
 {
-    BOOST_ASSERT(boost::filesystem::exists(base_dir));
+    assert(boost::filesystem::exists(base_dir));
     g_procfs_base = base_dir;
 }
 
