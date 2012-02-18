@@ -179,7 +179,7 @@ void berry::process::terminate(bool force)
         
 bool berry::process::still_exists() const
 {
-    if(pid() == 0)
+    if(*this == berry::not_a_process)
         return false;
     
     return boost::filesystem::exists(berry::unix_like::get_procfs_dir(*this));
