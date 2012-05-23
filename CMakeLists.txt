@@ -18,50 +18,55 @@ cmake_minimum_required(VERSION 2.6)
 project(berry)
 
 # Set appropiate flags. A C++11 compiler is required.
-if(CMAKE_COMPILER_IS_GNUCXX)
-  set(CMAKE_CXX_FLAGS "-std=c++0x -Wall -Wextra -Weffc++ -pedantic")
-  set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g")
-  set(CMAKE_CXX_FLAGS_RELEASE "-O3 -s -DNDEBUG")
+if(CMAKE_COMPILER_IS_GNUCXX OR "${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
+	set(CMAKE_CXX_FLAGS "-std=c++0x -Wall -Wextra -pedantic")
+   set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g")
+   set(CMAKE_CXX_FLAGS_RELEASE "-O3 -s -DNDEBUG")
 endif()
 
 # Boost is required to build Berry.
-find_package(Boost REQUIRED)
+find_package(Boost 1.42.0 COMPONENTS system filesystem REQUIRED)
 
 # Specify include directories.
-include_directories( include )
+set(BERRY_INCLUDE_DIR include)
+include_directories(
+   ${BERRY_INCLUDE_DIR}
+   ${Boost_INCLUDE_DIRS}
+)
 
 # Detect operating system.
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-    set(OPERATING_SYSTEM "linux")
+   set(OPERATING_SYSTEM "linux")
 endif(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 
 if(WIN32)
-    set(OPERATING_SYSTEM "win32")
+   set(OPERATING_SYSTEM "win32")
 endif(WIN32)
 
-# Compile berry as a shared library.
+# Compile berry as a library.
 file(GLOB BERRY_SOURCE_FILES "src/*.cpp")
 file(GLOB BERRY_SYSTEM_SOURCE_FILES "src/${OPERATING_SYSTEM}/*.cpp")
-add_library( berry SHARED
-    ${BERRY_SOURCE_FILES}
-    ${BERRY_SYSTEM_SOURCE_FILES}
+add_library(berry SHARED
+	${BERRY_SOURCE_FILES}
+   ${BERRY_SYSTEM_SOURCE_FILES}
 )
+set(BERRY_LIBRARIES berry)
 
 # Link libraries.
-target_link_libraries( berry
-  boost_system
-  boost_filesystem
+target_link_libraries(berry
+	${Boost_LIBRARIES}
 )
 
 # Compile Python bindings if wanted.
 option(COMPILE_PYTHON_BINDINGS "Turn on to compile Python bindings" ON)
 if(COMPILE_PYTHON_BINDINGS)
-    add_subdirectory(python)
+   add_subdirectory(python)
 endif(COMPILE_PYTHON_BINDINGS)
 
 # Compile tests if wanted.
-option(COMPILE_TESTS "Turn on to compile tests" OFF)
+option(COMPILE_TESTS "Turn on to compile tests" ON)
 if(COMPILE_TESTS)
+   add_subdirectory(test)
 endif(COMPILE_TESTS)
 
 # Install.
