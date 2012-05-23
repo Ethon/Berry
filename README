@@ -1,0 +1,17 @@
+Requirements to build:
+   - A reasonably C++11-compliant compiler.
+   - Boost version 1.42 or newer
+   - CMake, I guess 2.4 or later will suffice.
+   
+Build instructions (Linux):
+   - If not already done, get search from the git repository:
+      git clone git://github.com/Ethon/Berry.git Berry
+   - Change into Berry's directory:
+      cd Berry
+   - Create a directory for the build and change into it:
+      mkdir build && cd build
+   - Run CMake, optionally enable Python/Tests before:
+      cmake ..
+   - Compile and optionally install Berry:
+      make && sudo make install
+   - You're done !
