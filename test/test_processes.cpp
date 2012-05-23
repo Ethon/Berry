@@ -55,7 +55,7 @@ BOOST_AUTO_TEST_CASE(BerryProcessGetProcfsDir)
 BOOST_AUTO_TEST_CASE(BerryProcessGetExecutablePath)
 {
    process self(berry::get_current_process());
-   boost::filesystem::path exe(berry::get_executable_path(self));
+   boost::filesystem::path exe(self.executable_path());
       
    std::cout << "Current process executable path: " << exe.string() << '\n';
    BOOST_CHECK(boost::filesystem::exists(exe));
@@ -65,7 +65,7 @@ BOOST_AUTO_TEST_CASE(BerryProcessGetExecutablePath)
 BOOST_AUTO_TEST_CASE(BerryProcessGetBitness)
 {
    process self(berry::get_current_process());
-   int bitness = berry::get_bitness(self);
+   int bitness = self.bitness();
    int real_bitness = sizeof(void*) == 8 ? 64 : 32;
       
    std::cout << "Current process bitness: " << bitness << '\n';
@@ -78,16 +78,16 @@ BOOST_AUTO_TEST_CASE(BerryGetEntryByPid)
    process self(berry::get_current_process());
    
    boost::optional<berry::process_entry> by_pid(
-      berry::get_entry_by_pid(self.get_pid()));
+      berry::get_entry_by_pid(self.pid()));
    BOOST_REQUIRE(by_pid);
-   BOOST_CHECK_EQUAL(berry::get_name(self), by_pid->name);
+   BOOST_CHECK_EQUAL(self.name(), by_pid->name);
 }
 
 // Test berry::get_entry_by_name 1
 BOOST_AUTO_TEST_CASE(BerryGetEntryByName1)
 {
    process self(berry::get_current_process());
-   std::string self_name(berry::get_name(self));
+   std::string self_name(self.name());
    
    boost::optional<berry::process_entry> by_name(
       berry::get_entry_by_name(self_name));
@@ -99,7 +99,7 @@ BOOST_AUTO_TEST_CASE(BerryGetEntryByName1)
 BOOST_AUTO_TEST_CASE(BerryGetEntryByName2)
 {
    process self(berry::get_current_process());
-   std::string self_name(berry::get_name(self));
+   std::string self_name(self.name());
    
    boost::optional<berry::process_entry> by_name1(
       berry::get_entry_by_name(self_name, true));
