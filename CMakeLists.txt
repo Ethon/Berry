@@ -58,7 +58,7 @@ target_link_libraries(berry
 )
 
 # Compile Python bindings if wanted.
-option(COMPILE_PYTHON_BINDINGS "Turn on to compile Python bindings" ON)
+option(COMPILE_PYTHON_BINDINGS "Turn on to compile Python bindings" OFF)
 if(COMPILE_PYTHON_BINDINGS)
    add_subdirectory(python)
 endif(COMPILE_PYTHON_BINDINGS)
