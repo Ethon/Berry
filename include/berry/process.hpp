@@ -43,10 +43,16 @@ namespace berry
     /**
      * @brief Represents a process on the system.
      **/
-    class process
-    {
+	class process
+	{
     private:
         detail::process::process_data m_data;
+        
+        #ifdef BERRY_WINDOWS
+        
+        friend detail::process::handle_type _detail_get_shared_handle(
+			process const& proc) const;
+        #endif // BERRY_WINDOWS
         
     public:
         /**
@@ -215,7 +221,28 @@ namespace berry
          **/
         boost::filesystem::path get_procfs_dir(process proc);
     }
-#endif
+#endif // BERRY_HAS_PROCFS
+
+#ifdef BERRY_WINDOWS
+	namespace win
+	{
+		/**
+		 * @brief Defines a type to store process handles on Win32 platforms.
+		 **/
+		typedef detail::process::handle_type process_handle;
+		
+		/**
+		 * @brief Returns the process handle hold by the process object.
+		 * Use this if you need to call WinAPI functions yourself.
+		 * @param proc The target process.
+		 * @return process_handle A shared instance of the process handle.
+		 * As this is no copy of the handle, you may NOT close it and it
+		 * will get invalid after the process object is destroyed.
+		 **/
+		process_handle get_shared_handle(process const& proc)
+	}
+#endif // BERRY_WINDOWS
+
 }
 
 #endif // __BERRY_PROCESS_HPP__

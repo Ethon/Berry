@@ -251,6 +251,18 @@ berry::process& berry::process::operator=(berry::process&& other)
 }
 
 /******** Free functions ********/
+berry::detail::process::handle_type berry::_detail_get_shared_handle(
+	process const& proc) const
+{
+	return proc.m_data.handle;
+}
+
+berry::win::process_handle berry::win::get_shared_handle(
+	process const& proc) const
+{
+	return _detail_get_shared_handle(proc);
+}
+
 berry::process const& berry::get_current_process()
 {
     static berry::process const current_process(GetCurrentProcessId());
