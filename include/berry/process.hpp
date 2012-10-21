@@ -1,7 +1,7 @@
 /**
  * @file process.hpp
  * @author Ethon aka Florian Erler (ethon [a-t] ethon.cc)
- * @date 2011
+ * @date 2011, 2012
  * @version 1.0a
  * @brief Public process API. 
  * 
