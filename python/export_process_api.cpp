@@ -161,7 +161,7 @@ static void export_process_hpp()
 
 #ifdef BERRY_HAS_PROCFS
     { //::berry::unix_like::get_procfs_dir
-        typedef ::boost::filesystem3::path (*get_procfs_dir_function_type)
+        typedef ::boost::filesystem::path (*get_procfs_dir_function_type)
             (::berry::process);
         
         bp::def( 
